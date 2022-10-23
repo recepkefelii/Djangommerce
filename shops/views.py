@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from rest_framework.request import Request
-from .serializes import ShopSerializer
+from .serializers import ShopSerializer
 from .models import Shops
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
@@ -14,10 +14,12 @@ class ShopsCreateView(APIView):
     serializer_class = ShopSerializer
     def post(self,request:Request):
 
+        user = request.user
         data = request.data
         user_id = request.user.id
         data['auth'] = user_id
         verificationStatus = request.user.verification
+        seller = request.user.seller
 
         serializer = ShopSerializer(data=data)
         if serializer.is_valid():
@@ -28,8 +30,12 @@ class ShopsCreateView(APIView):
             message = {
             "mesage":'created shops',
             "data":serializer.data
-            } 
-            return Response(data=message,status=status.HTTP_201_CREATED)
+            }
+            if seller == False:
+                user.seller = True
+                user.save()
+            
+                return Response(data=message,status=status.HTTP_201_CREATED)
         
         return Response(data=serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
