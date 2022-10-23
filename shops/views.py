@@ -1,4 +1,3 @@
-import email
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -48,3 +47,5 @@ class ShopFilterAPIView(generics.ListAPIView):
     serializer_class = ShopSerializer
     search_fields = ['name','shops__name','auth__username']
     filterset_fields = ['name', 'auth']
+    #http://127.0.0.1:8000/shop/filter/?auth=4
+    #http://127.0.0.1:8000/shop/filter/?name=shop_name

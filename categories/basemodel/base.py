@@ -4,9 +4,9 @@ User = get_user_model()
 
 
 class BaseModel(models.Model):
-    created = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(auto_now_add=True)
     updated = models.DateField(auto_now=True)
-    created_by = models.ForeignKey(User,on_delete=models.CASCADE)
+    auth = models.ForeignKey(User,on_delete=models.CASCADE)
 
     class Meta:
          abstract = True
