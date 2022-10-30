@@ -11,26 +11,86 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 
 
+class ProductList(generics.ListCreateAPIView):
+    queryset = Products.objects.all()
+    serializer_class = ProductSerializer
+    filter_backends = [DjangoFilterBackend,filters.SearchFilter,filters.OrderingFilter]
+    filterset_fields = ['name','status']
+    search_fields = ['name','status']
+    ordering_fields = ['name','status']
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(auth=self.request.user)
+        
+
+class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Products.objects.all()
+    serializer_class = ProductSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(auth=self.request.user)
 
 class ProductAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    def get(self, request:Request):
-        product = Products.objects.all()
-        serializer = ProductSerializer(product,many=True) 
-        return Response(data=serializer.data,status=status.HTTP_200_OK)
-        
-        
+    def post(self,request):
+        serializer = ProductSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(auth=self.request.user)
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)  
 
-    def post(self,request:Request):
-        data = request.data
-        user = request.user
-        seller = request.user.seller
-        if not seller:
-            return Response(data={"Please create shop"})
-        serializer = ProductSerializer(data=data)
-                
+    def get(self,request):
+        product = Products.objects.all()
+        serializer = ProductSerializer(product,many=True)
+        return Response(serializer.data)
+
+    def put(self,request,pk):
+        product = Products.objects.get(pk=pk)
+        serializer = ProductSerializer(product,data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(data=serializer.data,status=status.HTTP_201_CREATED)
-        
-        return Response(data=serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.data)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self,request,pk):
+        product = Products.objects.get(pk=pk)
+        product.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    
+class ProductCreate(generics.CreateAPIView):
+    queryset = Products.objects.all()
+    serializer_class = ProductSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(auth=self.request.user)
+    
+class ProductUpdate(generics.UpdateAPIView):
+    queryset = Products.objects.all()
+    serializer_class = ProductSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(auth=self.request.user)
+    
+class ProductDelete(generics.DestroyAPIView):
+    queryset = Products.objects.all()
+    serializer_class = ProductSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(auth=self.request.user)
+    
+    
+# Path: Ecommerce\products\serializers.py
+
+
+   
+# Path: Ecommerce\products\urls.py
+# Compare this snippet from Ecommerce\shops\urls.py:
+
+
+

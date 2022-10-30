@@ -10,3 +10,4 @@ class Products(BaseModel):
     category = models.OneToOneField(Categories,on_delete=models.CASCADE)
     status = models.BooleanField(default=True)
     image = models.ImageField(upload_to='media/',null=True)
+    

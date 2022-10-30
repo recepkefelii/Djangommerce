@@ -9,49 +9,57 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 
 
-class ShopsCreateView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-    serializer_class = ShopSerializer
-    def post(self,request:Request):
-
-        user = request.user
-        data = request.data
-        user_id = request.user.id
-        data['auth'] = user_id
-        verificationStatus = request.user.verification
-        seller = request.user.seller
-
-        serializer = ShopSerializer(data=data)
-        if serializer.is_valid():
-            
-            if not verificationStatus:
-                return Response(data={"Please verify your email"})
-            serializer.save()
-            message = {
-            "mesage":'created shops',
-            "data":serializer.data
-            }
-            if seller == False:
-                user.seller = True
-                user.save()
-            
-                return Response(data=message,status=status.HTTP_201_CREATED)
-        
-        return Response(data=serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-
-    def get(self,request:Request):
-        shop = Shops.objects.filter(auth=request.user)
-        serializer = self.serializer_class(shop,many=True)
-        
-        return Response(data=serializer.data,status=status.HTTP_200_OK)
-
-
-class ShopFilterAPIView(generics.ListAPIView):
+class ShopList(generics.ListCreateAPIView):
     queryset = Shops.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend,filters.SearchFilter]
     serializer_class = ShopSerializer
-    search_fields = ['name','shops__name','auth__username']
-    filterset_fields = ['name', 'auth']
-    #http://127.0.0.1:8000/shop/filter/?auth=4
-    #http://127.0.0.1:8000/shop/filter/?name=shop_name
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['name', 'status']
+    search_fields = ['name', 'status']
+    ordering_fields = ['name', 'status']
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(auth=self.request.user)
+    
+
+class ShopDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Shops.objects.all()
+    serializer_class = ShopSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(auth=self.request.user)
+
+class ShopAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def post(self,request):
+        serializer = ShopSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(auth=self.request.user)
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)  
+
+    def get(self,request):
+        shop = Shops.objects.all()
+        serializer = ShopSerializer(shop,many=True)
+        return Response(serializer.data)
+
+    def put(self,request,pk):
+        shop = Shops.objects.get(pk=pk)
+        serializer = ShopSerializer(shop,data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self,request,pk):
+        shop = Shops.objects.get(pk=pk)
+        shop.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+
+    
+
+
+        
